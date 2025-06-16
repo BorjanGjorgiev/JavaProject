@@ -2,6 +2,9 @@ package com.example.intecproject.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -27,7 +30,6 @@ public class User {
 
     public User (String firstName, String lastName, String email, String password)
     {
-
         this.FirstName = firstName;
         this.LastName = lastName;
         this.Email = email;
@@ -42,11 +44,6 @@ public class User {
         {
             this.role=Role.USER;
         }
-    }
-
-    public void changeIsAvailable()
-    {
-        isAvailable=true;
     }
 
     public Long getId() {
@@ -119,5 +116,8 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public User() {
     }
 }
