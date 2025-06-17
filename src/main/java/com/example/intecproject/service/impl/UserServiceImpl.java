@@ -6,40 +6,29 @@ import com.example.intecproject.repository.GroupRepository;
 import com.example.intecproject.repository.UserRepository;
 import com.example.intecproject.service.UserService;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
 public class UserServiceImpl implements UserService {
-
-
     private final UserRepository userRepository;
-
     private final GroupRepository groupRepository;
-
     public UserServiceImpl(UserRepository userRepository, GroupRepository groupRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
     }
-
-
     @Override
     public List<User> findAll() {
         return userRepository.findAll();
     }
-
     @Override
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
-
     @Override
     public User save(User user) {
         return userRepository.save(user);
     }
-
     @Override
     public User update(Long id, User user) {
         User user1=findById(id);
@@ -50,66 +39,50 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user1);
         return user1;
     }
-
     @Override
     public void delete(Long id)
     {
-
         User user=findById(id);
         userRepository.delete(user);
     }
-
     @Override
     public List<User> importFromFile(MultipartFile file, User user) throws IOException {
         return null;
     }
-
     @Override
     public void PlaceUserInGroup(Long userId, Long groupId) {
         Group g=groupRepository.findById(groupId).orElse(null);
-
         User user=userRepository.findById(userId).orElse(null);
-
         user.setGroup(g);
         userRepository.save(user);
-
     }
-
     @Override
     public void RemoveUserFromGroup(Long userId, Long groupId)
     {
         User u=userRepository.findById(userId).orElse(null);
-
         Group g=groupRepository.findById(groupId).orElse(null);
-
         if(g.equals(u.getGroup()))
         {
             u.setGroup(null);
             userRepository.save(u);
         }
     }
-
     @Override
     public List<User> filterByDateBefore(LocalDateTime date) {
         return userRepository.findAll().stream().filter(x->x.getCreatedAt().isBefore(date)).collect(Collectors.toList());
     }
-
     @Override
     public List<User> filterByDateAfter(LocalDateTime date) {
         return userRepository.findAll().stream().filter(x->x.getCreatedAt().isBefore(date)).collect(Collectors.toList());
     }
-
     @Override
     public void changePassword(Long id, String oldPassword, String newPassword) {
         User user=findById(id);
-
         if(!user.getPassword().equals(oldPassword))
         {
             throw new IllegalArgumentException("Old password is incorrect");
         }
-
         user.setPassword(newPassword);
         userRepository.save(user);
-
     }
 }
