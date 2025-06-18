@@ -1,11 +1,14 @@
 package com.example.intecproject.controller;
 
 
+import com.example.intecproject.model.DTO.UserDTO;
 import com.example.intecproject.model.Group;
 import com.example.intecproject.model.User;
 import com.example.intecproject.service.GroupService;
 import com.example.intecproject.service.UserService;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +40,14 @@ public class UserController {
     {
         userService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user)
+    {
+        UserDTO userDTO=UserDTO.fromUser(user);
+        return ResponseEntity.ok(userDTO);
     }
     @GetMapping("/users/{id}")
     public ResponseEntity<User> getDetailsForUser(@PathVariable Long id)
