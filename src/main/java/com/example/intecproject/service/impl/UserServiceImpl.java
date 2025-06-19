@@ -5,6 +5,7 @@ import com.example.intecproject.model.User;
 import com.example.intecproject.repository.GroupRepository;
 import com.example.intecproject.repository.UserRepository;
 import com.example.intecproject.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -13,9 +14,12 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    public UserServiceImpl(UserRepository userRepository, GroupRepository groupRepository) {
+
+    private final PasswordEncoder passwordEncoder;
+    public UserServiceImpl(UserRepository userRepository, GroupRepository groupRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
+        this.passwordEncoder = passwordEncoder;
     }
     @Override
     public List<User> findAll() {
@@ -75,14 +79,19 @@ public class UserServiceImpl implements UserService {
     public List<User> filterByDateAfter(LocalDateTime date) {
         return userRepository.findAll().stream().filter(x->x.getCreatedAt().isBefore(date)).collect(Collectors.toList());
     }
+
+
+
     @Override
     public void changePassword(Long id, String oldPassword, String newPassword) {
-        User user=findById(id);
-        if(!user.getPassword().equals(oldPassword))
-        {
+        User user = findById(id);
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect");
         }
-        user.setPassword(newPassword);
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
+
         userRepository.save(user);
     }
 }

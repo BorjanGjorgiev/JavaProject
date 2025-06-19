@@ -1,6 +1,12 @@
 package com.example.intecproject.service.impl;
 import com.example.intecproject.model.DTO.LoginRequestDto;
 import com.example.intecproject.model.DTO.UserDTO;
+import com.example.intecproject.model.User;
+import com.example.intecproject.repository.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,55 +17,96 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Objects;
 
 @Service
 public class AuthenticationService
 {
     private final PasswordEncoder passwordEncoder;
+
+   private final UserRepository userRepository;
+
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
-    public AuthenticationService(PasswordEncoder passwordEncoder) {
+    public AuthenticationService(PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+
     }
     public UserDTO authenticate(LoginRequestDto credentialsDto) {
-        String encodedMasterPassword = passwordEncoder.encode(CharBuffer.wrap("the-password"));
-        if (passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), encodedMasterPassword)) {
-            return new UserDTO(1L, "Sergio", "Lema", "login", "token");
+       User user=userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(()->new RuntimeException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())) {
+            throw new RuntimeException("Invalid email or password");
         }
-        throw new RuntimeException("Invalid password");
+
+        return UserDTO.fromUser(user);
     }
     public UserDTO findByLogin(String login) {
-        if ("login".equals(login)) {
-            return new UserDTO(1L, "Sergio", "Lema", "login", "token");
-        }
-        throw new RuntimeException("Invalid login");
+        User user=userRepository.findByEmail(login)
+                .orElseThrow(()->new RuntimeException("Invalid email or password"));
+        return UserDTO.fromUser(user);
     }
-    public String createToken(UserDTO user) {
-        return user.getId() + "&" + user.getLogin() + "&" + calculateHmac(user);
+    public String createAccessToken(UserDTO user) {
+
+        Date now=new Date();
+        Date expiry=new Date(now.getTime()+15*60*1000);
+
+        return Jwts.builder().setSubject(user.getLogin())
+                .claim("id",user.getId())
+                .setIssuedAt(now).
+                setExpiration(expiry)
+                .signWith(SignatureAlgorithm.HS512,secretKey.getBytes()).compact();
     }
     public UserDTO findByToken(String token) {
-        String[] parts = token.split("&");
-        Long userId = Long.valueOf(parts[0]);
-        String login = parts[1];
-        String hmac = parts[2];
-        UserDTO userDto = findByLogin(login);
-        if (!hmac.equals(calculateHmac(userDto)) || userId != userDto.getId()) {
-            throw new RuntimeException("Invalid Cookie value");
+        try
+        {
+            Claims claims=Jwts.parser()
+                    .setSigningKey(secretKey.getBytes())
+                    .parseClaimsJws(token).getBody();
+
+            String login=claims.getSubject();
+            return findByLogin(login);
         }
-        return userDto;
-    }
-    private String calculateHmac(UserDTO user) {
-        byte[] secretKeyBytes = Objects.requireNonNull(secretKey).getBytes(StandardCharsets.UTF_8);
-        byte[] valueBytes = Objects.requireNonNull(user.getId() + "&" + user.getLogin()).getBytes(StandardCharsets.UTF_8);
-        try {
-            Mac mac = Mac.getInstance("HmacSHA512");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyBytes, "HmacSHA512");
-            mac.init(secretKeySpec);
-            byte[] hmacBytes = mac.doFinal(valueBytes);
-            return Base64.getEncoder().encodeToString(hmacBytes);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
+        catch (JwtException e)
+        {
+            throw new RuntimeException("Invalid JWT token");
         }
     }
+
+
+    public String createRefreshToken(UserDTO user)
+    {
+        Date now=new Date();
+
+        Date expiry=new Date(now.getTime()+7L*24*60*60*1000);
+
+
+        return Jwts.builder()
+                .setSubject(user.getLogin())
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(SignatureAlgorithm.HS512,secretKey.getBytes())
+                .compact();
+
+    }
+
+    public UserDTO validateRefreshToken(String token)
+    {
+        try
+        {
+            Claims claims=Jwts.parser()
+                    .setSigningKey(secretKey.getBytes())
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String login=claims.getSubject();
+            return findByLogin(login);
+        }catch (JwtException e)
+        {
+            throw new RuntimeException("Invalid refresh token");
+        }
+    }
+
 }

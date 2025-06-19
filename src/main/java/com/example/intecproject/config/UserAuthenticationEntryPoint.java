@@ -13,15 +13,11 @@ import org.springframework.http.HttpHeaders;
 
 public class UserAuthenticationEntryPoint implements AuthenticationEntryPoint
 {
-
-
     private static final ObjectMapper MAPPER=new ObjectMapper();
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-
-
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         MAPPER.writeValue(response.getOutputStream(),new ErrorDto("Unathorized path"));
