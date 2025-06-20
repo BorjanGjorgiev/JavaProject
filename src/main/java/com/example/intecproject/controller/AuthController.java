@@ -68,17 +68,14 @@ public class AuthController
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUserDto dto)
     {
-
         User user=new User();
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
-
         userService.save(user);
         return ResponseEntity.ok("Registered successfully");
     }
-
     @PostMapping("/refresh")
     public ResponseEntity<UserDTO> refreshToken(@CookieValue(name = "refresh_token", required = false) String refreshToken,
                                                 HttpServletResponse response)
@@ -86,31 +83,26 @@ public class AuthController
         if (refreshToken == null) {
             return ResponseEntity.status(401).build();
         }
-
         UserDTO user;
         try {
             user = authenticationService.validateRefreshToken(refreshToken);
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).build();
         }
-
         String newAccessToken = authenticationService.createAccessToken(user);
         String newRefreshToken = authenticationService.createRefreshToken(user);
-
         Cookie accessCookie = new Cookie(CookieAuthenticationFilter.COOKIE_NAME, newAccessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(true);
         accessCookie.setPath("/");
         accessCookie.setMaxAge(15 * 60);
         response.addCookie(accessCookie);
-
         Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(true);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(refreshCookie);
-
         user.setToken(newAccessToken);
         return ResponseEntity.ok(user);
     }
@@ -124,22 +116,15 @@ public class AuthController
         accessCookie.setPath("/");
         accessCookie.setMaxAge(0); // веднаш истекување
         response.addCookie(accessCookie);
-
-
         Cookie refreshCookie = new Cookie("refresh_token", null);
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(true);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(0);
         response.addCookie(refreshCookie);
-
-
         SecurityContextHolder.clearContext();
-
         return ResponseEntity.noContent().build();
     }
-
-
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO dto,@AuthenticationPrincipal User user)
     {
@@ -147,13 +132,10 @@ public class AuthController
         {
             userService.changePassword(user.getId(),dto.getOldPassword(),dto.getNewPassword());
             return ResponseEntity.ok("Password changed successfully!");
-
         }
         catch (IllegalArgumentException e)
         {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-
 }
