@@ -27,16 +27,12 @@ public class User {
     @JoinColumn(name = "group_id")
     @JsonBackReference
     private Group group;
-
     @Enumerated(EnumType.STRING)
     private Role role;
-
     private LocalDateTime createdAt;
-
     public User() {
         // default constructor
     }
-
     public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -50,23 +46,18 @@ public class User {
             this.role = Role.USER;
         }
     }
-
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     public String getFirstName() {
         return firstName;
     }
-
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
-
     public String getLastName() {
         return lastName;
     }
