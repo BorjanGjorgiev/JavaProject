@@ -30,7 +30,7 @@ public class UserController {
     {
       return  userService.findAll();
     }
-    @PostMapping
+    @PostMapping("/add-user")
     public ResponseEntity<User> createUser(@RequestBody User user)
     {
         return ResponseEntity.ok(userService.save(user));
@@ -54,14 +54,17 @@ public class UserController {
     {
         return ResponseEntity.ok(userService.findById(id));
     }
-    @PostMapping("/{userId}/groups/{groupId}/place")
+
+    @PostMapping("/api/users/{userId}/groups/{groupId}/place")
     public ResponseEntity<?> placeUserInGroup(@PathVariable Long userId, @PathVariable Long groupId) {
         userService.PlaceUserInGroup(userId, groupId);
         return ResponseEntity.ok("User added to group.");
     }
-    @DeleteMapping("/{userId}/groups/{groupId}/delete")
+
+    @DeleteMapping("/api/users/{userId}/groups/{groupId}/remove")
     public ResponseEntity<?> removeUserFromGroup(@PathVariable Long userId, @PathVariable Long groupId) {
         userService.RemoveUserFromGroup(userId, groupId);
         return ResponseEntity.ok("User removed from group.");
     }
+
 }

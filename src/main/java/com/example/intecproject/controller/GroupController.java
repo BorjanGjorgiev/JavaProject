@@ -11,7 +11,7 @@ import com.example.intecproject.service.UserService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 @RestController
-@RequestMapping("/api/gpoups")
+@RequestMapping("/api")
 public class GroupController {
     private final GroupService groupService;
     private final UserService userService;
@@ -34,16 +34,19 @@ public class GroupController {
     {
         return ResponseEntity.ok(groupService.findById(id));
     }
-    @PostMapping("/{userId}/groups/{groupId}/place")
-    public ResponseEntity<?> placeUserInGroup(@PathVariable Long userId, @PathVariable Long groupId) throws Exception {
+
+    @PostMapping("/api/groups/{groupId}/users/{userId}/place")
+    public ResponseEntity<?> placeUserInGroup(@PathVariable Long groupId, @PathVariable Long userId) throws Exception {
         groupService.addUserToGroup(userId, groupId);
         return ResponseEntity.ok("User added to group.");
     }
-    @DeleteMapping("/{userId}/groups/{groupId}/delete")
-    public ResponseEntity<?> removeUserFromGroup(@PathVariable Long userId, @PathVariable Long groupId) throws Exception {
+    @DeleteMapping("/api/groups/{groupId}/users/{userId}/remove")
+    public ResponseEntity<?> removeUserFromGroup(@PathVariable Long groupId, @PathVariable Long userId) throws Exception {
         groupService.RemoveUserFromGroup(userId, groupId);
         return ResponseEntity.ok("User removed from group.");
     }
+
+
 
     @GetMapping("/{id}/export")
     public ResponseEntity<byte[]> exportToPdf(@PathVariable Long id)

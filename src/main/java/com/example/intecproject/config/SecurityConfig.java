@@ -1,5 +1,6 @@
 package com.example.intecproject.config;
 
+import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,11 +30,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .logout(logout -> logout.deleteCookies(CookieAuthenticationFilter.COOKIE_NAME))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**", "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE,"/api/**").permitAll()
                         .anyRequest().authenticated()
                 );
-
         return http.build();
     }
 }
