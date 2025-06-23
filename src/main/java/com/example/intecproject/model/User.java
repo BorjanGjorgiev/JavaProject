@@ -1,48 +1,52 @@
 package com.example.intecproject.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 @Entity
-@Table(name="users")
+@AllArgsConstructor
+@Table(name = "users_table")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String FirstName;
-    private String LastName;
-    private String Email;
+
+    private String firstName;
+    private String lastName;
+    private String email;
     private String password;
     private Boolean isAvailable;
+
     @ManyToOne
-    @JoinColumn(name="group_id")
+    @JoinColumn(name = "group_id")
+    @JsonBackReference
     private Group group;
+
     @Enumerated(EnumType.STRING)
     private Role role;
+
     private LocalDateTime createdAt;
 
-    public User (String firstName, String lastName, String email, String password)
-    {
-        this.FirstName = firstName;
-        this.LastName = lastName;
-        this.Email = email;
+    public User() {
+        // default constructor
+    }
+
+    public User(String firstName, String lastName, String email, String password) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
         this.password = password;
-        this.isAvailable=false;
-        this.createdAt=LocalDateTime.now();
-        if(email!=null && email.toLowerCase().contains("admin") )
-        {
-            this.role=Role.ADMIN;
-        }
-        else
-        {
-            this.role=Role.USER;
+        this.isAvailable = false;
+        this.createdAt = LocalDateTime.now();
+        if (email != null && email.toLowerCase().contains("admin")) {
+            this.role = Role.ADMIN;
+        } else {
+            this.role = Role.USER;
         }
     }
 
@@ -55,27 +59,27 @@ public class User {
     }
 
     public String getFirstName() {
-        return FirstName;
+        return firstName;
     }
 
     public void setFirstName(String firstName) {
-        FirstName = firstName;
+        this.firstName = firstName;
     }
 
     public String getLastName() {
-        return LastName;
+        return lastName;
     }
 
     public void setLastName(String lastName) {
-        LastName = lastName;
+        this.lastName = lastName;
     }
 
     public String getEmail() {
-        return Email;
+        return email;
     }
 
     public void setEmail(String email) {
-        Email = email;
+        this.email = email;
     }
 
     public String getPassword() {
@@ -116,8 +120,5 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public User() {
     }
 }

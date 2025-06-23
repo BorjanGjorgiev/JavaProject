@@ -13,12 +13,15 @@ import com.itextpdf.text.Paragraph;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import org.springframework.stereotype.Service;
 
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.stream.Stream;
 
+
+@Service
 public class GroupServiceImpl implements GroupService {
 
 

@@ -10,7 +10,10 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 
 import java.io.IOException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class UserAuthenticationEntryPoint implements AuthenticationEntryPoint
 {
     private static final ObjectMapper MAPPER=new ObjectMapper();

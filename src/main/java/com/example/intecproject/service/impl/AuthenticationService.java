@@ -8,6 +8,9 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
@@ -23,13 +26,19 @@ import java.util.Objects;
 @Service
 public class AuthenticationService
 {
+
     private final PasswordEncoder passwordEncoder;
 
    private final UserRepository userRepository;
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
-    public AuthenticationService(PasswordEncoder passwordEncoder, UserRepository userRepository) {
+    public AuthenticationService(@Lazy PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
 

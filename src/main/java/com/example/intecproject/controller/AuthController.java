@@ -7,7 +7,6 @@ import com.example.intecproject.model.DTO.RegisterUserDto;
 import com.example.intecproject.model.DTO.UserDTO;
 import com.example.intecproject.service.impl.AuthenticationService;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import com.example.intecproject.model.User;

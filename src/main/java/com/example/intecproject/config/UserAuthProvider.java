@@ -3,6 +3,7 @@ package com.example.intecproject.config;
 import com.example.intecproject.model.DTO.LoginRequestDto;
 import com.example.intecproject.model.DTO.UserDTO;
 import com.example.intecproject.service.impl.AuthenticationService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,7 +19,7 @@ public class UserAuthProvider implements AuthenticationProvider
 
 private final AuthenticationService authenticationService;
 
-    public UserAuthProvider(AuthenticationService authenticationService) {
+    public UserAuthProvider(@Lazy AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
     @Override

@@ -1,16 +1,18 @@
 package com.example.intecproject.service.impl;
-
 import com.example.intecproject.model.Group;
 import com.example.intecproject.model.User;
 import com.example.intecproject.repository.GroupRepository;
 import com.example.intecproject.repository.UserRepository;
 import com.example.intecproject.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+@Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
@@ -39,7 +41,7 @@ public class UserServiceImpl implements UserService {
         user1.setEmail(user.getEmail());
         user1.setFirstName(user.getFirstName());
         user1.setLastName(user.getLastName());
-        user1.setIsAvailable(user.getAvailable());
+        user1.setAvailable(user.getAvailable());
         userRepository.save(user1);
         return user1;
     }
