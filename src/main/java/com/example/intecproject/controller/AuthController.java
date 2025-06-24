@@ -113,7 +113,7 @@ public class AuthController
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(true);
         accessCookie.setPath("/");
-        accessCookie.setMaxAge(0); // веднаш истекување
+        accessCookie.setMaxAge(0);
         response.addCookie(accessCookie);
         Cookie refreshCookie = new Cookie("refresh_token", null);
         refreshCookie.setHttpOnly(true);

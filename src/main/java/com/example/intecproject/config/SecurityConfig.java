@@ -13,13 +13,10 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
     private final UserAuthenticationEntryPoint userAuthenticationEntryPoint;
-
     public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint) {
         this.userAuthenticationEntryPoint = userAuthenticationEntryPoint;
     }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -34,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/api/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE,"/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signout").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
