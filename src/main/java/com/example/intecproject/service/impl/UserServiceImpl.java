@@ -6,10 +6,12 @@ import com.example.intecproject.repository.UserRepository;
 import com.example.intecproject.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,6 +75,13 @@ public class UserServiceImpl implements UserService {
             userRepository.save(u);
         }
     }
+
+    @Override
+    public void ChangeAvailabilityOfUser(@PathVariable Long userId) {
+        User u=userRepository.findById(userId).orElse(null);
+        u.setIsAvailable(!u.getIsAvailable());
+    }
+
     @Override
     public List<User> filterByDateBefore(LocalDateTime date) {
         return userRepository.findAll().stream().filter(x->x.getCreatedAt().isBefore(date)).collect(Collectors.toList());

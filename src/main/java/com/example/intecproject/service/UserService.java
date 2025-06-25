@@ -22,6 +22,8 @@ public interface UserService {
 
     void RemoveUserFromGroup(Long userId,Long groupId);
 
+    void ChangeAvailabilityOfUser(Long userId);
+
     List<User>filterByDateBefore(LocalDateTime date);
 
     List<User> filterByDateAfter(LocalDateTime date);
