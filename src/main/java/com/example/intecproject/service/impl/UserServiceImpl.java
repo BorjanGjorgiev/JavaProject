@@ -79,7 +79,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public void ChangeAvailabilityOfUser(@PathVariable Long userId) {
         User u=userRepository.findById(userId).orElse(null);
-        u.setIsAvailable(!u.getIsAvailable());
+        u.setAvailable(!u.getAvailable());
+
+        userRepository.save(u);
     }
 
     @Override

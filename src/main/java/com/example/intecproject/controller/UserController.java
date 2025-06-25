@@ -68,4 +68,12 @@ public class UserController {
         return ResponseEntity.ok("User removed from group.");
     }
 
+
+    @PostMapping("/api/users/changeAvailability/{userId}")
+    public ResponseEntity<Void> changeAvailability(@PathVariable Long userId)
+    {
+        userService.ChangeAvailabilityOfUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
