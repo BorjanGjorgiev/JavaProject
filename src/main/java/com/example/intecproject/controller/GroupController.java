@@ -11,7 +11,8 @@ import com.example.intecproject.service.UserService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 @RestController
-@RequestMapping("/api")
+
+@RequestMapping("/api")@CrossOrigin(origins = "*")
 public class GroupController {
     private final GroupService groupService;
     private final UserService userService;

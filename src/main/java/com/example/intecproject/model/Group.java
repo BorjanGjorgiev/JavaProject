@@ -76,6 +76,6 @@ public class Group {
 
     public void removeUser(User u) {
         users.remove(u);
-        u.setGroup(null); // Clear the back reference
+        u.setGroup(null);
     }
 }

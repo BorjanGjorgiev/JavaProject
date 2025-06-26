@@ -61,6 +61,11 @@ public class UserServiceImpl implements UserService {
     public void PlaceUserInGroup(Long userId, Long groupId) {
         Group g=groupRepository.findById(groupId).orElse(null);
         User user=userRepository.findById(userId).orElse(null);
+        if (user.getGroup() != null) {
+            throw new IllegalStateException("User is already in a group. Remove from current group first.");
+        }
+
+
         user.setGroup(g);
         userRepository.save(user);
     }

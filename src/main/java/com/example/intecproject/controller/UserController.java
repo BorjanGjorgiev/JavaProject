@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
-@RequestMapping("/api")
+
+@RequestMapping("/api")@CrossOrigin(origins = "*")
 @RestController
 
 public class UserController {
@@ -36,7 +36,7 @@ public class UserController {
     {
         return ResponseEntity.ok(userService.save(user));
     }
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/users/delete/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id)
     {
         userService.delete(id);
@@ -50,7 +50,7 @@ public class UserController {
         UserDTO userDTO=UserDTO.fromUser(user);
         return ResponseEntity.ok(userDTO);
     }
-    @GetMapping("/users/{id}")
+    @GetMapping("/users/details/{id}")
     public ResponseEntity<User> getDetailsForUser(@PathVariable Long id)
     {
         return ResponseEntity.ok(userService.findById(id));
@@ -62,7 +62,7 @@ public class UserController {
         return ResponseEntity.ok("User added to group.");
     }
 
-    @DeleteMapping("/api/users/{userId}/groups/{groupId}/remove")
+    @PostMapping("/api/users/{userId}/groups/{groupId}/remove")
     public ResponseEntity<?> removeUserFromGroup(@PathVariable Long userId, @PathVariable Long groupId) {
         userService.RemoveUserFromGroup(userId, groupId);
         return ResponseEntity.ok("User removed from group.");
