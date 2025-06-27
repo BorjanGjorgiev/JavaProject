@@ -13,10 +13,15 @@ import com.itextpdf.text.Paragraph;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -57,6 +62,12 @@ public class GroupServiceImpl implements GroupService {
 
         groupRepository.delete(g);
 
+    }
+
+    @Override
+    public Group createGroup(String groupName) {
+        Group newGroup=new Group(groupName);
+        return groupRepository.save(newGroup);
     }
 
     @Override
@@ -110,54 +121,49 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public byte[] exportToPDF(String name) {
-        Group g = groupRepository.findByGroupName(name);
-        if (g == null) {
-            throw new RuntimeException("Group not found: " + name);
+    public byte[] exportToExcel(Long groupId) throws IOException {
+
+        Group group=findById(groupId);
+
+        Workbook workbook=new XSSFWorkbook();
+        Sheet sheet=workbook.createSheet(group.getGroupName());
+
+        Row metarow=sheet.createRow(0);
+
+        metarow.createCell(0).setCellValue("Group Name:");
+        metarow.createCell(1).setCellValue(group.getGroupName());
+        metarow.createCell(2).setCellValue("Created At:");
+        metarow.createCell(3).setCellValue(group.getCreatedAt().toString());
+
+
+        Row headerRow=sheet.createRow(2);
+
+        headerRow.createCell(1).setCellValue("First Name");
+        headerRow.createCell(2).setCellValue("Last Name");
+        headerRow.createCell(3).setCellValue("Email");
+        headerRow.createCell(4).setCellValue("Role");
+
+    int rowNum=3;
+
+    for(User user:group.getUsers())
+    {
+        Row row=sheet.createRow(rowNum++);
+
+        row.createCell(1).setCellValue(user.getFirstName());
+        row.createCell(2).setCellValue(user.getLastName());
+        row.createCell(3).setCellValue(user.getEmail());
+        row.createCell(4).setCellValue(user.getRole().toString());
+    }
+
+        for (int i = 0; i < 5; i++) {
+            sheet.autoSizeColumn(i);
         }
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document();
-            PdfWriter.getInstance(document, out);
-            document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-            Font tableCellFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
 
-            Paragraph title = new Paragraph("Group: " + g.getGroupName(), titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
-            document.add(title);
-
-            PdfPTable table = new PdfPTable(4); // FirstName, LastName, Email, Role
-            table.setWidthPercentage(100);
-            table.setSpacingBefore(10f);
-
-            // Table headers
-            Stream.of("First Name", "Last Name", "Email", "Role").forEach(headerTitle -> {
-                PdfPCell header = new PdfPCell();
-                header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                header.setBorderWidth(1);
-                header.setPhrase(new Phrase(headerTitle, tableHeaderFont));
-                table.addCell(header);
-            });
-
-            List<User> users = g.getUsers();
-            for (User user : users) {
-                table.addCell(new Phrase(user.getFirstName(), tableCellFont));
-                table.addCell(new Phrase(user.getLastName(), tableCellFont));
-                table.addCell(new Phrase(user.getEmail(), tableCellFont));
-                table.addCell(new Phrase(user.getRole().toString(), tableCellFont));
-            }
-
-            document.add(table);
-            document.close();
-
-            return out.toByteArray();
-
-        } catch (Exception e) {
-            throw new RuntimeException("PDF generation failed", e);
-        }
+        return outputStream.toByteArray();
     }
 }
 

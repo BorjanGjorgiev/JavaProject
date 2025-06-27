@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/api/groups/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE,"/api/groups/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signout").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/logs").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

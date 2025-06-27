@@ -9,10 +9,13 @@ import org.springframework.ui.Model;
 import com.example.intecproject.service.GroupService;
 import com.example.intecproject.service.UserService;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 import java.util.List;
 @RestController
 
-@RequestMapping("/api")@CrossOrigin(origins = "*")
+@RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class GroupController {
     private final GroupService groupService;
     private final UserService userService;
@@ -29,6 +32,13 @@ public class GroupController {
     {
         groupService.deleteGroup(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/groups/create")
+    public ResponseEntity<Group> createNewGroup(@RequestBody Group group)
+    {
+        Group createdGroup=groupService.createGroup(group.getGroupName());
+        return new ResponseEntity<>(createdGroup,HttpStatus.CREATED);
     }
     @GetMapping("/{id}")
     public ResponseEntity<Group> getDetailsForGroup(@PathVariable Long id)
@@ -50,13 +60,14 @@ public class GroupController {
 
 
     @GetMapping("/{id}/export")
-    public ResponseEntity<byte[]> exportToPdf(@PathVariable Long id)
-    {
-        Group g=groupService.findById(id);
-        byte[] pdfBytes=groupService.exportToPDF(g.getGroupName());
-        HttpHeaders headers=new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment",g.getGroupName()+"_export.pdf");
-        return new ResponseEntity<>(pdfBytes,headers, HttpStatus.OK);
+    public ResponseEntity<byte[]> exportToExcel(@PathVariable Long id) throws IOException {
+       byte[] excelData= groupService.exportToExcel(id);
+
+       HttpHeaders headers=new HttpHeaders();
+
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "group_" + id + ".xlsx");
+
+        return new ResponseEntity<>(excelData,headers,HttpStatus.OK);
     }
 }
