@@ -2,6 +2,7 @@ package com.example.intecproject.service.impl;
 
 import com.example.intecproject.exception.NoUsersInGroupException;
 import com.example.intecproject.model.Group;
+import com.example.intecproject.model.Role;
 import com.example.intecproject.model.User;
 import com.example.intecproject.repository.GroupRepository;
 import com.example.intecproject.repository.UserRepository;
@@ -13,15 +14,15 @@ import com.itextpdf.text.Paragraph;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -165,5 +166,60 @@ public class GroupServiceImpl implements GroupService {
 
         return outputStream.toByteArray();
     }
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return null;
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+                    ? cell.getLocalDateTimeCellValue().toString()
+                    : String.valueOf(cell.getNumericCellValue());
+            case FORMULA -> cell.getCellFormula();
+            case BLANK -> "";
+            default -> cell.toString();
+        };
+    }
+
+    @Override
+    public void importUsersFromExcel(Long groupId, MultipartFile file) throws IOException {
+        Group group = findById(groupId);
+
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                String firstName = getCellValueAsString(row.getCell(0));
+                String lastName = getCellValueAsString(row.getCell(1));
+                String email = getCellValueAsString(row.getCell(2));
+                String password = getCellValueAsString(row.getCell(3));
+                boolean isAvailable = Boolean.parseBoolean(getCellValueAsString(row.getCell(4)));
+                String createdAtStr = getCellValueAsString(row.getCell(5));
+                String role = getCellValueAsString(row.getCell(6));
+
+                User user = new User();
+                user.setFirstName(firstName);
+                user.setLastName(lastName);
+                user.setEmail(email);
+                user.setPassword(password);
+                user.setAvailable(isAvailable);
+                user.setCreatedAt(LocalDateTime.parse(createdAtStr)); // Ensure ISO_LOCAL_DATE_TIME format
+                user.setRole(Role.valueOf(role.toUpperCase()));
+                user.setGroup(group);
+
+                user = userRepository.save(user);
+                group.getUsers().add(user);
+            }
+
+            groupRepository.save(group);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to import users", e);
+        }
+    }
+
+
 }
 

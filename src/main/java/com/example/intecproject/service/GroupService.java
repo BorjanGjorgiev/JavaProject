@@ -2,6 +2,7 @@ package com.example.intecproject.service;
 
 import com.example.intecproject.exception.NoUsersInGroupException;
 import com.example.intecproject.model.Group;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,4 +18,6 @@ public interface GroupService {
     void addUserToGroup(Long userId,Long groupId) throws Exception, NoUsersInGroupException;
     void RemoveUserFromGroup(Long userId,Long groupId) throws Exception;
     byte[] exportToExcel(Long groupId) throws IOException;
+
+    void importUsersFromExcel(Long groupId,MultipartFile file) throws IOException;
 }

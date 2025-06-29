@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"}, allowCredentials = "true")
 public class AuthController
 {
     private final UserService userService;
@@ -67,11 +68,12 @@ public class AuthController
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUserDto dto)
     {
-        User user=new User();
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        User user = new User(
+                dto.getFirstName(),
+                dto.getLastName(),
+                dto.getEmail(),
+                passwordEncoder.encode(dto.getPassword())
+        );
         userService.save(user);
         return ResponseEntity.ok("Registered successfully");
     }
@@ -123,6 +125,15 @@ public class AuthController
         response.addCookie(refreshCookie);
         SecurityContextHolder.clearContext();
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UserDTO userDTO = UserDTO.fromUser(user);
+        return ResponseEntity.ok(userDTO);
     }
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO dto,@AuthenticationPrincipal User user)

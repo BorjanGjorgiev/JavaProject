@@ -27,12 +27,12 @@ public class CookieAuthenticationFilter extends
                 .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
                 .findFirst();
 
-    cookieAuth.ifPresent(cookie->
-            SecurityContextHolder.getContext().setAuthentication(
-                    new PreAuthenticatedAuthenticationToken(cookie.getValue(),null)
-            ));
+        cookieAuth.ifPresent(cookie->
+                SecurityContextHolder.getContext().setAuthentication(
+                        new PreAuthenticatedAuthenticationToken(cookie.getValue(),null)
+                ));
 
-    filterChain.doFilter(request,response);
+        filterChain.doFilter(request,response);
     }
 
 

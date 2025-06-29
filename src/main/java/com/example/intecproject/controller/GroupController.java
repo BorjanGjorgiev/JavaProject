@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import com.example.intecproject.service.GroupService;
 import com.example.intecproject.service.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -69,5 +70,11 @@ public class GroupController {
         headers.setContentDispositionFormData("attachment", "group_" + id + ".xlsx");
 
         return new ResponseEntity<>(excelData,headers,HttpStatus.OK);
+    }
+
+    @PostMapping("/groups/{id}/import")
+    public ResponseEntity<?> importUsers(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException {
+        groupService.importUsersFromExcel(id, file);
+        return ResponseEntity.ok().build();
     }
 }

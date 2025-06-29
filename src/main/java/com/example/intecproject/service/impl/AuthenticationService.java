@@ -29,12 +29,9 @@ public class AuthenticationService
 
     private final PasswordEncoder passwordEncoder;
 
-   private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
 
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
@@ -44,7 +41,7 @@ public class AuthenticationService
 
     }
     public UserDTO authenticate(LoginRequestDto credentialsDto) {
-       User user=userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(()->new RuntimeException("Invalid email or password"));
+        User user=userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(()->new RuntimeException("Invalid email or password"));
 
         if (!passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
