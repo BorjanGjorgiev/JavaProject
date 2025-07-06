@@ -8,6 +8,7 @@ import com.example.intecproject.model.DTO.UserDTO;
 import com.example.intecproject.service.impl.AuthenticationService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.intecproject.model.User;
 import com.example.intecproject.service.UserService;
@@ -128,12 +129,17 @@ public class AuthController
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(401).build();
+    public ResponseEntity<?> getCurrentUser(@CookieValue(name = "auth_by_cookie", required = false) String token) {
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token found in cookie");
         }
-        UserDTO userDTO = UserDTO.fromUser(user);
-        return ResponseEntity.ok(userDTO);
+
+        try {
+            UserDTO user = authenticationService.findByToken(token);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO dto,@AuthenticationPrincipal User user)

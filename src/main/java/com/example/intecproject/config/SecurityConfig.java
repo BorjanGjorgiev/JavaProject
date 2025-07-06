@@ -1,10 +1,6 @@
 package com.example.intecproject.config;
 
-import com.example.intecproject.config.CookieAuthenticationFilter;
-import com.example.intecproject.config.UserAuthenticationEntryPoint;
-import com.example.intecproject.config.UsernamePasswordAuthFilter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
+import com.example.intecproject.service.impl.AuthenticationService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,18 +12,31 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     private final UserAuthenticationEntryPoint userAuthenticationEntryPoint;
+    private final AuthenticationService authenticationService;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint) {
+    @Bean
+    public JwtAuthorizationFilter jwtAuthorizationFilter() {
+        return new JwtAuthorizationFilter(authenticationService);
+    }
+    @Bean
+    public CookieAuthenticationFilter cookieAuthenticationFilter() {
+        return new CookieAuthenticationFilter(authenticationService);
+    }
+
+    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint, AuthenticationService authenticationService) {
         this.userAuthenticationEntryPoint = userAuthenticationEntryPoint;
+        this.authenticationService = authenticationService;
     }
 
     @Bean
@@ -35,8 +44,12 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(userAuthenticationEntryPoint))
+
+                // Fix: Use known filter classes with registered orders
+                .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new UsernamePasswordAuthFilter(), BasicAuthenticationFilter.class)
-                .addFilterBefore(new CookieAuthenticationFilter(), UsernamePasswordAuthFilter.class)
+                .addFilterBefore(cookieAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .logout(logout -> logout.deleteCookies(CookieAuthenticationFilter.COOKIE_NAME))

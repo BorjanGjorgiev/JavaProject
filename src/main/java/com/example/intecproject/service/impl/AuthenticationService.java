@@ -24,24 +24,24 @@ import java.util.Date;
 import java.util.Objects;
 
 @Service
-public class AuthenticationService
-{
+public class AuthenticationService {
 
     private final PasswordEncoder passwordEncoder;
 
     private final UserRepository userRepository;
 
 
-
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
+
     public AuthenticationService(@Lazy PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
 
     }
+
     public UserDTO authenticate(LoginRequestDto credentialsDto) {
-        User user=userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(()->new RuntimeException("Invalid email or password"));
+        User user = userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
         if (!passwordEncoder.matches(CharBuffer.wrap(credentialsDto.getPassword()), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
@@ -49,57 +49,56 @@ public class AuthenticationService
 
         return UserDTO.fromUser(user);
     }
+
     public UserDTO findByLogin(String login) {
-        User user=userRepository.findByEmail(login)
-                .orElseThrow(()->new RuntimeException("Invalid email or password"));
+        User user = userRepository.findByEmail(login)
+                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
         return UserDTO.fromUser(user);
     }
+
     public String createAccessToken(UserDTO user) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + 15 * 60 * 1000);  // 15 minutes expiration
 
-        Date now=new Date();
-        Date expiry=new Date(now.getTime()+15*60*1000);
-
-        return Jwts.builder().setSubject(user.getLogin())
-                .claim("id",user.getId())
-                .setIssuedAt(now).
-                setExpiration(expiry)
-                .signWith(SignatureAlgorithm.HS512,secretKey.getBytes()).compact();
+        return Jwts.builder()
+                .setSubject(user.getLogin())  // This will be the email (login)
+                .claim("login", user.getLogin())    // Add the user ID as a claim
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(SignatureAlgorithm.HS512, secretKey.getBytes())  // Secret key to sign the token
+                .compact();
     }
+
     public UserDTO findByToken(String token) {
-        try
-        {
-            Claims claims=Jwts.parser()
+        try {
+            Claims claims = Jwts.parser()
                     .setSigningKey(secretKey.getBytes())
                     .parseClaimsJws(token).getBody();
 
-            String login=claims.getSubject();
+            String login = claims.getSubject();
             return findByLogin(login);
-        }
-        catch (JwtException e)
-        {
+        } catch (JwtException e) {
             throw new RuntimeException("Invalid JWT token");
         }
     }
 
 
-    public String createRefreshToken(UserDTO user)
-    {
-        Date now=new Date();
+    public String createRefreshToken(UserDTO user) {
+        Date now = new Date();
 
-        Date expiry=new Date(now.getTime()+7L*24*60*60*1000);
+        Date expiry = new Date(now.getTime() + 7L * 24 * 60 * 60 * 1000);
 
 
         return Jwts.builder()
                 .setSubject(user.getLogin())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(SignatureAlgorithm.HS512,secretKey.getBytes())
+                .signWith(SignatureAlgorithm.HS512, secretKey.getBytes())
                 .compact();
 
     }
 
-    public UserDTO validateRefreshToken(String token)
-    {
+    public UserDTO validateRefreshToken(String token) {
         try
         {
             Claims claims=Jwts.parser()
@@ -113,6 +112,6 @@ public class AuthenticationService
         {
             throw new RuntimeException("Invalid refresh token");
         }
-    }
 
+    }
 }

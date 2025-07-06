@@ -1,31 +1,27 @@
 package com.example.intecproject.config;
 
 import com.example.intecproject.service.impl.AuthenticationService;
+import com.example.intecproject.model.DTO.UserDTO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.core.Ordered;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.Optional;
-import java.util.stream.Stream;
 
-public class CookieAuthenticationFilter extends
-        OncePerRequestFilter implements Ordered
 
-{
-    public static final String COOKIE_NAME = "auth_by_cookie";
+@Component
+public class JwtAuthorizationFilter extends OncePerRequestFilter implements Ordered {
 
     private final AuthenticationService authenticationService;
 
-    public CookieAuthenticationFilter(AuthenticationService authenticationService) {
+    public JwtAuthorizationFilter(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 
@@ -35,31 +31,30 @@ public class CookieAuthenticationFilter extends
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        Optional<Cookie> cookieAuth = Stream.of(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
-                .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
-                .findFirst();
+        String authHeader = request.getHeader("Authorization");
 
-        cookieAuth.ifPresent(cookie -> {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwtToken = authHeader.substring(7);
+
             try {
-                String token = cookie.getValue();
-                var user = authenticationService.findByToken(token); // Validate token & extract user
+                UserDTO user = authenticationService.findByToken(jwtToken);
 
                 if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    var auth = new PreAuthenticatedAuthenticationToken(user, null, null); // optionally pass roles
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            user, null, null // optionally pass authorities
+                    );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-            } catch (Exception e) {
-                // Invalid token - ignore or log if needed
+            } catch (RuntimeException e) {
+                // Invalid token: optionally log or ignore
             }
-        });
+        }
 
         filterChain.doFilter(request, response);
     }
 
     @Override
     public int getOrder() {
-        return SecurityProperties.BASIC_AUTH_ORDER - 3; // First in your custom filter chain
+        return SecurityProperties.BASIC_AUTH_ORDER - 2; // Before UsernamePasswordAuthFilter
     }
-
-
 }
