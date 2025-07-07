@@ -68,4 +68,8 @@ public class UserDTO {
         dto.login = user.getEmail();
         return dto;
     }
+    @Override
+    public String toString() {
+        return String.format("%s",login);
+    }
 }

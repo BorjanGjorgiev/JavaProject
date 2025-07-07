@@ -23,18 +23,20 @@ public class ActivityLoggingFilter extends OncePerRequestFilter
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String ipAddress = request.getRemoteAddr();
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
 
-        String ipAddress=request.getRemoteAddr();
-        String uri=request.getRequestURI();
-        String method=request.getMethod();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = "anonymous";
 
-        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
-        String username=auth !=null && auth.isAuthenticated() ? auth.getName() : "anonymous";
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            username = auth.getName();
+        }
 
+        userLogService.log(username, method + " " + uri, ipAddress);
 
-        userLogService.log(username,method+" "+uri,ipAddress);
-
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
 
     }
 }

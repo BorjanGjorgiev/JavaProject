@@ -23,7 +23,7 @@ public class UsernamePasswordAuthFilter
     private static final ObjectMapper MAPPER=new ObjectMapper();
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if("/v1/signin".equals(request.getServletPath()) && HttpMethod.POST.matches(request.getMethod()))
+        if("api/auth/login".equals(request.getServletPath()) && HttpMethod.POST.matches(request.getMethod()))
         {
             LoginRequestDto credentialsDto = MAPPER.readValue(request.getInputStream(),LoginRequestDto.class);
 

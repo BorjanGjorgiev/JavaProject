@@ -68,6 +68,20 @@ public class AuthenticationService {
                 .signWith(SignatureAlgorithm.HS512, secretKey.getBytes())  // Secret key to sign the token
                 .compact();
     }
+    public User findUserByToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(secretKey.getBytes())
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String login = claims.getSubject();
+            return userRepository.findByEmail(login)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid JWT token");
+        }
+    }
 
     public UserDTO findByToken(String token) {
         try {

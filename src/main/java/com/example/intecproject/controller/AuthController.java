@@ -129,13 +129,13 @@ public class AuthController
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@CookieValue(name = "auth_by_cookie", required = false) String token) {
+    public ResponseEntity<?> getCurrentUser(@CookieValue(name = CookieAuthenticationFilter.COOKIE_NAME, required = false) String token) {
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token found in cookie");
         }
 
         try {
-            UserDTO user = authenticationService.findByToken(token);
+            User user = authenticationService.findUserByToken(token);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");

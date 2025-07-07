@@ -34,6 +34,11 @@ public class SecurityConfig {
         return new CookieAuthenticationFilter(authenticationService);
     }
 
+    @Bean
+    public ActivityLoggingFilter activityLoggingFilter() {
+        return new ActivityLoggingFilter();
+    }
+
     public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint, AuthenticationService authenticationService) {
         this.userAuthenticationEntryPoint = userAuthenticationEntryPoint;
         this.authenticationService = authenticationService;
@@ -45,35 +50,32 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(userAuthenticationEntryPoint))
 
-                // Fix: Use known filter classes with registered orders
+
                 .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new UsernamePasswordAuthFilter(), BasicAuthenticationFilter.class)
                 .addFilterBefore(cookieAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-
+                .addFilterAfter(activityLoggingFilter(), CookieAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .logout(logout -> logout.deleteCookies(CookieAuthenticationFilter.COOKIE_NAME))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/change-password").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/api").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/change-password","/api/auth/signout").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/auth/me").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/signout").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/logs").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/api").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/groups/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/groups/*/export").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/{id}/export").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/groups/{id}/import").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/groups/{id}/import").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/groups/*").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE,"/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE,"/api/groups/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/auth/signout").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/logs").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .build();
