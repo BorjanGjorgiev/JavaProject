@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 public class CookieAuthenticationFilter extends
         OncePerRequestFilter
-
 {
     public static final String COOKIE_NAME="auth_by_cookie";
     @Override

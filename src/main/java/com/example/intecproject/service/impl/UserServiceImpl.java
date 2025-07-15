@@ -98,6 +98,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream().filter(x->x.getCreatedAt().isBefore(date)).collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<User> findByEmail(String email) {
+        if(email!=null)
+        {
+             new Exception("This email doesnt exist");
+        }
+
+       return userRepository.findByEmail(email);
+    }
 
 
     @Override

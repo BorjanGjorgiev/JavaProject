@@ -27,6 +27,9 @@ public class LoginRequestDto {
         return password;
     }
 
+    public LoginRequestDto() {
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }

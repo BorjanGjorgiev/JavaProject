@@ -8,13 +8,16 @@ import com.example.intecproject.model.DTO.UserDTO;
 import com.example.intecproject.service.impl.AuthenticationService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.intecproject.model.User;
 import com.example.intecproject.service.UserService;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 
 @RestController
@@ -45,7 +48,7 @@ public class AuthController
 
         Cookie accessCookie = new Cookie(CookieAuthenticationFilter.COOKIE_NAME, jwt);
         accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(true);
+        accessCookie.setSecure(false);
         accessCookie.setMaxAge(24 * 60 * 60);
         accessCookie.setPath("/");
         response.addCookie(accessCookie);
@@ -56,7 +59,7 @@ public class AuthController
 
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
+        refreshCookie.setSecure(false);
         refreshCookie.setMaxAge(7 * 24 * 60 * 60);
         refreshCookie.setPath("/");
         response.addCookie(refreshCookie);
@@ -111,6 +114,8 @@ public class AuthController
     @PostMapping("/signOut")
     public ResponseEntity<Void> signOut(HttpServletResponse response)
     {
+
+        System.out.println("User signed out");
         Cookie accessCookie = new Cookie(CookieAuthenticationFilter.COOKIE_NAME, null);
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(true);
@@ -130,8 +135,21 @@ public class AuthController
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user) {
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            // Fallback to check SecurityContext directly
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).build();
+            }
+
+            if (authentication.getPrincipal() instanceof User) {
+                user = (User) authentication.getPrincipal();
+            } else if (authentication.getPrincipal() instanceof String) {
+                // If principal is just the email, fetch the user
+                user = userService.findByEmail((String) authentication.getPrincipal())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+            }
         }
+
         UserDTO userDTO = UserDTO.fromUser(user);
         return ResponseEntity.ok(userDTO);
     }

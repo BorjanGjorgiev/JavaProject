@@ -1,14 +1,11 @@
 package com.example.intecproject.model;
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 @Data
 @Entity
 @AllArgsConstructor
@@ -17,15 +14,11 @@ public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String groupName;
-
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<User> users;
-
     private LocalDateTime createdAt;
-
     public Group() {
         this.users = new ArrayList<>();
         this.createdAt = LocalDateTime.now();

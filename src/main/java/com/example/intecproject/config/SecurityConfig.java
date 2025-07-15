@@ -1,10 +1,5 @@
 package com.example.intecproject.config;
 
-import com.example.intecproject.config.CookieAuthenticationFilter;
-import com.example.intecproject.config.UserAuthenticationEntryPoint;
-import com.example.intecproject.config.UsernamePasswordAuthFilter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,19 +10,31 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     private final UserAuthenticationEntryPoint userAuthenticationEntryPoint;
+    private final ActivityLoggingFilter activityLoggingFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserAuthProvider userAuthProvider;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint) {
+    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint,
+                          ActivityLoggingFilter activityLoggingFilter,
+                          JwtAuthenticationFilter jwtAuthenticationFilter,
+                          UserAuthProvider userAuthProvider) {
         this.userAuthenticationEntryPoint = userAuthenticationEntryPoint;
+        this.activityLoggingFilter = activityLoggingFilter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.userAuthProvider = userAuthProvider;
     }
 
     @Bean
@@ -35,32 +42,22 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(userAuthenticationEntryPoint))
-                .addFilterBefore(new UsernamePasswordAuthFilter(), BasicAuthenticationFilter.class)
-                .addFilterBefore(new CookieAuthenticationFilter(), UsernamePasswordAuthFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout.deleteCookies(CookieAuthenticationFilter.COOKIE_NAME))
+                .authenticationProvider(userAuthProvider)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(activityLoggingFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/change-password").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/api").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/auth/me").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/auth/signout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/{id}").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/groups/*/export").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/{id}/export").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/groups/{id}/import").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/groups/*").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE,"/api/groups/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signout").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/logs").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signout").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/groups/*/export").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/{id}/export").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/groups/{id}/import").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/logs").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .build();

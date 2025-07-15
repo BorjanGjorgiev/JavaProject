@@ -40,6 +40,18 @@ public class AuthenticationService
         this.userRepository = userRepository;
 
     }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser()
+                    .setSigningKey(secretKey.getBytes())
+                    .parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     public UserDTO authenticate(LoginRequestDto credentialsDto) {
         User user=userRepository.findByEmail(credentialsDto.getEmail()).orElseThrow(()->new RuntimeException("Invalid email or password"));
 
