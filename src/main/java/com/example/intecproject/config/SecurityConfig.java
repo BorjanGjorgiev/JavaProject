@@ -1,5 +1,6 @@
 package com.example.intecproject.config;
 
+import com.example.intecproject.service.impl.AuthenticationService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,31 +11,37 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
     private final UserAuthenticationEntryPoint userAuthenticationEntryPoint;
-    private final ActivityLoggingFilter activityLoggingFilter;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserAuthProvider userAuthProvider;
+    private final AuthenticationService authenticationService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint,
-                          ActivityLoggingFilter activityLoggingFilter,
-                          JwtAuthenticationFilter jwtAuthenticationFilter,
-                          UserAuthProvider userAuthProvider) {
+    @Bean
+    public JwtAuthorizationFilter jwtAuthorizationFilter() {
+        return new JwtAuthorizationFilter(authenticationService);
+    }
+    @Bean
+    public CookieAuthenticationFilter cookieAuthenticationFilter() {
+        return new CookieAuthenticationFilter(authenticationService);
+    }
+
+    @Bean
+    public ActivityLoggingFilter activityLoggingFilter() {
+        return new ActivityLoggingFilter();
+    }
+
+    public SecurityConfig(UserAuthenticationEntryPoint userAuthenticationEntryPoint, AuthenticationService authenticationService) {
         this.userAuthenticationEntryPoint = userAuthenticationEntryPoint;
-        this.activityLoggingFilter = activityLoggingFilter;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userAuthProvider = userAuthProvider;
+        this.authenticationService = authenticationService;
     }
 
     @Bean
@@ -42,22 +49,33 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(userAuthenticationEntryPoint))
+
+
+                .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new UsernamePasswordAuthFilter(), BasicAuthenticationFilter.class)
+                .addFilterBefore(cookieAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(activityLoggingFilter(), CookieAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(userAuthProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(activityLoggingFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout.deleteCookies(CookieAuthenticationFilter.COOKIE_NAME))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/signout").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/groups/*/export").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/{id}/export").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/groups/{id}/import").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/logs").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/change-password","/api/auth/signout").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/auth/me").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/logs").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/api").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/groups/*/export").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/{id}/export").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/groups/{id}/import").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/groups/*").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE,"/api/groups/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/signout").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .build();

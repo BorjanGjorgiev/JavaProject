@@ -1,5 +1,7 @@
 package com.example.intecproject.model.DTO;
 
+
+
 public class LoginRequestDto {
 
 
@@ -14,6 +16,8 @@ public class LoginRequestDto {
         this.password = password;
     }
 
+    public LoginRequestDto() {
+    }
 
     public String getEmail() {
         return email;
@@ -27,8 +31,6 @@ public class LoginRequestDto {
         return password;
     }
 
-    public LoginRequestDto() {
-    }
 
     public void setPassword(String password) {
         this.password = password;

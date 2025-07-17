@@ -133,25 +133,16 @@ public class AuthController
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            // Fallback to check SecurityContext directly
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(401).build();
-            }
-
-            if (authentication.getPrincipal() instanceof User) {
-                user = (User) authentication.getPrincipal();
-            } else if (authentication.getPrincipal() instanceof String) {
-                // If principal is just the email, fetch the user
-                user = userService.findByEmail((String) authentication.getPrincipal())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-            }
+    public ResponseEntity<?> getCurrentUser(@CookieValue(name = CookieAuthenticationFilter.COOKIE_NAME, required = false) String token) {
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token found in cookie");
         }
-
-        UserDTO userDTO = UserDTO.fromUser(user);
-        return ResponseEntity.ok(userDTO);
+        try {
+            User user = authenticationService.findUserByToken(token);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO dto,@AuthenticationPrincipal User user)
